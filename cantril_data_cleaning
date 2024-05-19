@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Function to clean each file
+clean_file() {
+  local file=$1
+  
+  # Check if the file is tab-separated
+  if ! head -n 1 "$file" | grep -q $'\t'; then
+    echo "Error: $file is not a tab-separated file."
+    return 1
+  fi
+  
+  # Get the header and determine the number of columns
+  header=$(head -n 1 "$file")
+  num_columns=$(echo "$header" | awk -F'\t' '{print NF}')
+  
+  # Check for lines with an incorrect number of cells
+  awk -F'\t' -v cols=$num_columns 'NR==1 {next} NF != cols {print "Incorrect number of cells in line " NR ": " $0}' "$file"
+  
+  # Remove 'Continent' column and filter rows
+  awk -F'\t' -v OFS='\t' '
+    NR == 1 {
+      for (i=1; i<=NF; i++) {
+        if ($i == "Continent") continent_col = i
+        else headers[i] = $i
+      }
+      next
+    }
+    $2 != "" && $3 >= 2011 && $3 <= 2021 {
+      if (continent_col) {
+        for (i=1; i<=NF; i++) {
+          if (i != continent_col) printf "%s%s", $i, (i==NF || (continent_col && i==NF-1) ? ORS : OFS)
+        }
+      } else {
+        print $0
+      }
+    }
+  ' "$file"
+}
