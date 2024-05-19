@@ -52,3 +52,33 @@ compute_correlation() {
         }
     }' "$datafile"
 }
+
+# Calculate correlations for each predictor
+declare -A mean_correlations
+
+# Mapping the predictors to the desired output format
+declare -A predictor_map
+predictor_map["GDP per capita, PPP (constant 2017 international \$)"]="GDP"
+predictor_map["Population (historical estimates)"]="Population"
+predictor_map["Homicide rate per 100,000 population - Both sexes - All ages"]="Homicide Rate"
+predictor_map["Life expectancy - Sex: all - Age: at birth - Variant: estimates"]="Life Expectancy"
+
+predictors=("GDP per capita, PPP (constant 2017 international \$)" "Population (historical estimates)" "Homicide rate per 100,000 population - Both sexes - All ages" "Life expectancy - Sex: all - Age: at birth - Variant: estimates")
+
+for predictor in "${predictors[@]}"; do
+    output=$(compute_correlation "$predictor")
+    sum=0
+    count=0
+    while IFS= read -r correlation; do
+        if [ ! -z "$correlation" ]; then
+            sum=$(echo "$sum + $correlation" | bc -l 2>/dev/null)
+            count=$((count + 1))
+        fi
+    done <<< "$output"
+    if [ $count -gt 0 ]; then
+        mean=$(echo "$sum / $count" | bc -l 2>/dev/null)
+        mean_correlations["$predictor"]=$mean
+    else
+        mean_correlations["$predictor"]=0
+    fi
+done
