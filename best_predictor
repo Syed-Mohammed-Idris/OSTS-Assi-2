@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Name: Syed Mohammed Idris
+# Student ID: 24259144
+# Course: MASTER OF DATA SCIENCE, SEM-1
+# Unit: Open Source Tools and Scripting
+
 if [ "$#" -ne 1 ]; then
     echo "Usage: ./best_predictor <datafile>"
     exit 1
