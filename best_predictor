@@ -82,3 +82,27 @@ for predictor in "${predictors[@]}"; do
         mean_correlations["$predictor"]=0
     fi
 done
+
+# Print the results in the specified order and format
+for predictor in "Homicide rate per 100,000 population - Both sexes - All ages" "GDP per capita, PPP (constant 2017 international \$)" "Population (historical estimates)" "Life expectancy - Sex: all - Age: at birth - Variant: estimates"; do
+    mean_corr=${mean_correlations[$predictor]}
+    formatted_corr=$(printf "%.3f" $mean_corr)
+    echo "Mean correlation of ${predictor_map[$predictor]} with Cantril ladder is $formatted_corr"
+done
+
+# Determine the best predictor
+best_predictor=""
+best_correlation=0
+
+for predictor in "${!mean_correlations[@]}"; do
+    mean_corr=${mean_correlations[$predictor]}
+    abs_mean_corr=$(echo "$mean_corr" | awk '{print ($1 >= 0 ? $1 : -$1)}')
+    if (( $(echo "$abs_mean_corr > $best_correlation" | bc -l 2>/dev/null) )); then
+        best_predictor=$predictor
+        best_correlation=$mean_corr
+    fi
+done
+
+best_predictor_name=${predictor_map[$best_predictor]}
+formatted_best_correlation=$(printf "%.3f" $best_correlation)
+echo "Most predictive mean correlation with the Cantril ladder is $best_predictor_name (r = $formatted_best_correlation)"
