@@ -1,0 +1,54 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: ./best_predictor <datafile>"
+    exit 1
+fi
+
+datafile=$1
+
+# Function to compute Pearson correlation using awk and bc
+compute_correlation() {
+    predictor=$1
+    awk -v predictor="$predictor" '
+    BEGIN {
+        FS="\t";
+        OFS="\t";
+    }
+    NR == 1 {
+        for (i = 1; i <= NF; i++) {
+            if ($i == predictor) predictor_idx = i;
+            if ($i == "Cantril ladder score") cantril_idx = i;
+        }
+    }
+    NR > 1 && predictor_idx > 0 && cantril_idx > 0 {
+        if ($predictor_idx != "" && $cantril_idx != "") {
+            country[$1]++;
+            x[$1] += $predictor_idx;
+            y[$1] += $cantril_idx;
+            xx[$1] += $predictor_idx * $predictor_idx;
+            yy[$1] += $cantril_idx * $cantril_idx;
+            xy[$1] += $predictor_idx * $cantril_idx;
+        }
+    }
+    END {
+        for (c in country) {
+            if (country[c] >= 3) {
+                n = country[c];
+                sum_x = x[c];
+                sum_y = y[c];
+                sum_xx = xx[c];
+                sum_yy = yy[c];
+                sum_xy = xy[c];
+                
+                numerator = n * sum_xy - sum_x * sum_y;
+                denominator = sqrt((n * sum_xx - sum_x * sum_x) * (n * sum_yy - sum_y * sum_y));
+                
+                if (denominator != 0) {
+                    correlation = numerator / denominator;
+                    print correlation;
+                }
+            }
+        }
+    }' "$datafile"
+}
