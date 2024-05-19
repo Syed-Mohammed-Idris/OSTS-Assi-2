@@ -37,3 +37,23 @@ clean_file() {
     }
   ' "$file"
 }
+
+# Temporary files for cleaned data
+gdp_file=$(mktemp)
+homicide_file=$(mktemp)
+life_exp_file=$(mktemp)
+
+# Clean each file and store in temporary files
+for file in "$@"; do
+  case "$file" in
+    *gdp-vs-happiness*)
+      clean_file "$file" > "$gdp_file"
+      ;;
+    *homicide-rate-unodc*)
+      clean_file "$file" > "$homicide_file"
+      ;;
+    *life-satisfaction-vs-life-expectancy*)
+      clean_file "$file" > "$life_exp_file"
+      ;;
+  esac
+done
